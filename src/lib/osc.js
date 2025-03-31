@@ -6,6 +6,7 @@ import { BaseConnection } from "./baseConnection";
 export const channelMeters = writable([]);
 
 export class OSCConnection extends BaseConnection {
+	static name = "x32-proxy";
 	client;
 	liveRequestInterval;
 

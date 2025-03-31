@@ -3,6 +3,7 @@ import { makeToast, msConfig, currentConnectionStatus, ConnectionStatusEnum } fr
 import { BaseConnection } from "./baseConnection";
 
 export class MixingStationConnection extends BaseConnection {
+	static name = "Mixing Station";
 	client;
 	nameCharacterLimit = 0; // none to start
 	_pingInterval;

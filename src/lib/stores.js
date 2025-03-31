@@ -24,9 +24,11 @@ export const mqttConfig = localStorageWritable("mqttConfig", {
 });
 export const mqttStatus = writable({ connected: false, address: null });
 
+/** @type {import("svelte/store").Writable<keyof typeof import("./connectionUtil").connectors>} */
 export const connectionMode = localStorageWritable("connectionMode", "osc");
 export const oscConfig = localStorageWritable("oscConfig", {});
 export const msConfig = localStorageWritable("msConfig", {});
+export const m7clConfig = localStorageWritable("m7clConfig", {});
 
 /** @type {import("svelte/store").Writable<{ flipSceneOrder: boolean }>} */
 export const appConfig = localStorageWritable("appConfig", {});
@@ -41,7 +43,7 @@ export const ConnectionStatusEnum = /** @type {const} */ ({
 	CONNECTED: 1,
 	CONNECTING: 2,
 });
-/** @type {import("svelte/store").Writable<{status: typeof ConnectionStatusEnum[keyof typeof ConnectionStatusEnum]}>} */
+/** @type {import("svelte/store").Writable<{status: typeof ConnectionStatusEnum[keyof typeof ConnectionStatusEnum], address: string | null}>} */
 export const currentConnectionStatus = writable({ status: ConnectionStatusEnum.DISCONNECTED, address: null });
 
 // disconnect when switching modes

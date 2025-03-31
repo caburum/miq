@@ -4,7 +4,7 @@
 	import { mqttConfig, mqttStatus } from "../lib/stores";
 	import { connect, disconnect } from "../lib/mqtt";
 
-	import { newConnection } from "../lib/connectionUtil";
+	import { connectors, newConnection } from "../lib/connectionUtil";
 	import {
 		connectionMode,
 		currentConnection,
@@ -12,6 +12,7 @@
 		ConnectionStatusEnum,
 		oscConfig,
 		msConfig,
+		m7clConfig,
 		appConfig,
 	} from "../lib/stores";
 </script>
@@ -35,8 +36,9 @@
 
 			<p>
 				Connection mode: <select disabled={$currentConnectionStatus.status > 0} bind:value={$connectionMode}>
-					<option value="osc">x32-proxy</option>
-					<option value="ms">Mixing Station</option>
+					{#each Object.entries(connectors) as [key, connector]}
+						<option value={key}>{connector.name}</option>
+					{/each}
 				</select>
 				{#if $currentConnectionStatus.status > 0}(disconnect to edit){/if}
 			</p>
@@ -72,6 +74,11 @@
 					<p>Secure: <input type="checkbox" bind:checked={$msConfig.secure} /></p>
 					<p>Resend cues (0≤n≤4): <input type="number" bind:value={$msConfig.resendNum} min="0" max="4" /> times</p>
 					<p>Enable Auto Reconnect?: <input type="checkbox" bind:checked={$msConfig.autoReconnect} /></p>
+				</div>
+			{:else if $connectionMode == "m7cl"}
+				<p>Connect to the M7CL over MIDI, and configure it to receive NRPN control change commands.</p>
+				<div class="verti" disabled={$currentConnectionStatus.status > 0 || null}>
+					<p>Default Output ID: <input type="text" bind:value={$m7clConfig.host} /></p>
 				</div>
 			{/if}
 			<p>

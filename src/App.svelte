@@ -22,7 +22,7 @@
 		ConnectionStatusEnum,
 		channelOverrides,
 	} from "./lib/stores";
-	import { newConnection, connectionAddress } from "./lib/connectionUtil";
+	import { newConnection, connectionAddress, connectors } from "./lib/connectionUtil";
 	import { configs, sheets, ddp, loadExternalConfig, updateSheet } from "./lib/db";
 	import { connect, disconnect, getCompleteMqttConfig, incomingMessage, mqttClient } from "./lib/mqtt";
 
@@ -329,11 +329,7 @@
 	on:blur={() => (debouncingFire = false)}
 />
 
-<main
-	class:showingModal={$showingModal}
-	inert={$showingModal}
-	class:hideButtons={rxActive && $mqttConfig.rx_preview}
->
+<main class:showingModal={$showingModal} inert={$showingModal} class:hideButtons={rxActive && $mqttConfig.rx_preview}>
 	<div class="top">
 		<!-- svelte-ignore a11y-no-noninteractive-element-to-interactive-role -->
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -394,7 +390,7 @@
 				style="position: relative;"
 				style:display={rxActive ? "none" : null}
 			>
-				{$connectionMode === "osc" ? "x32-proxy" : $connectionMode === "ms" ? "Mixing Station" : ""}:
+				{connectors[$connectionMode].name}:
 				<br />
 				<span
 					style:color={`var(--${

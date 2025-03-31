@@ -14,6 +14,8 @@ import { get } from "svelte/store";
  */
 
 export class BaseConnection {
+	static name = null;
+
 	constructor() {
 		// reset status but keep reconnecting indicator if set
 		currentConnectionStatus.set({ status: ConnectionStatusEnum.CONNECTING, address: null });
