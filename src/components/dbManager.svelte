@@ -50,6 +50,7 @@
 			let config = $storedConfigs.find((item) => item.id === editing.data.id);
 			const sheetId = $sheets.find((item) => item.id === config?.sheetId)?.sheetId;
 			config = { ...config, sheetId };
+			delete config.id;
 			const link = new URL(window.location.href);
 			link.searchParams.set("config", btoa(JSON.stringify(config)));
 			exportedLink = link.href;
@@ -66,9 +67,8 @@
 		const sheetId = linkedConfig?.sheetId;
 		delete linkedConfig.sheetId;
 		delete linkedConfig.id;
-		if (linkedConfig.table) {
-			delete linkedConfig.table;
-		}
+		if (linkedConfig.table) delete linkedConfig.table;
+		linkedConfig.name = linkedConfig.name.replace(/^Linked: /, "");
 		// add sheet to sheets
 		const sheet = { sheetId, name: linkedConfig.name };
 		const newSheetId = await db.sheets.add(sheet);
