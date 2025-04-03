@@ -39,7 +39,7 @@ export class M7CLConnection extends BaseConnection {
 					if (this.input) {
 						this.input.addEventListener("midimessage", this._onmidimessage.bind(this));
 
-						this.liveRequestInterval = setInterval(this._requestMetering, 10_000);
+						this.liveRequestInterval = setInterval(this._requestMetering.bind(this), 10_000);
 						this._requestMetering();
 					} else {
 						makeToast("No input device found for live metering", "", "warn");
