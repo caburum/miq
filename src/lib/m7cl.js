@@ -153,8 +153,10 @@ export class M7CLConnection extends BaseConnection {
 
 		let levels = new Float32Array(data.slice(9, -1));
 		for (let i = 0; i < levels.length; i++) {
-			levels[i] =
-				(10 ** (M7CLConnection.meterToLevel[levels[i]] / 10) - 10 ** (-95 / 10)) / (10 ** (0 / 10) - 10 ** (-95 / 10));
+			// levels[i] =
+			// 	(10 ** (M7CLConnection.meterToLevel[levels[i]] / 10) - 10 ** (-95 / 10)) / (10 ** (0 / 10) - 10 ** (-95 / 10));
+
+			levels[i] = Math.pow(1 - M7CLConnection.meterToLevel[levels[i]] / -95, 2);
 		}
 
 		channelMeters.set(levels);
@@ -208,5 +210,6 @@ export class M7CLConnection extends BaseConnection {
 		this.output?.close();
 		this.input?.removeEventListener("midimessage", this._onmidimessage);
 		this.input?.close();
+		clearInterval(this.liveRequestInterval);
 	}
 }
