@@ -153,7 +153,8 @@ export class M7CLConnection extends BaseConnection {
 
 		let levels = new Float32Array(data.slice(9, -1));
 		for (let i = 0; i < levels.length; i++) {
-			levels[i] = (10 ** (meterToLevel[levels[i]] / 10) - 10 ** (-95 / 10)) / (10 ** (0 / 10) - 10 ** (-95 / 10));
+			levels[i] =
+				(10 ** (M7CLConnection.meterToLevel[levels[i]] / 10) - 10 ** (-95 / 10)) / (10 ** (0 / 10) - 10 ** (-95 / 10));
 		}
 
 		channelMeters.set(levels);
