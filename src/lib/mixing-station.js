@@ -4,6 +4,7 @@ import { BaseConnection } from "./baseConnection";
 
 export class MixingStationConnection extends BaseConnection {
 	static name = "Mixing Station";
+
 	client;
 	nameCharacterLimit = 0; // none to start
 	_pingInterval;
@@ -129,11 +130,11 @@ export class MixingStationConnection extends BaseConnection {
 	static getCompleteConfig() {
 		const config = get(msConfig);
 		return {
+			...BaseConnection.getCompleteConfig(),
 			...config,
 			host: config.host || "localhost",
 			port: config.port || 8080,
 			secure: config.secure ?? false,
-			autoReconnect: config.autoReconnect ?? false,
 		};
 	}
 

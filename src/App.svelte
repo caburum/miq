@@ -310,6 +310,7 @@
 
 <svelte:window
 	on:keydown={(e) => {
+		if (e.key === "Escape") $showingModal = null;
 		if ($showingModal || channelOverrideDialogChannel !== null) return; // only run on main page
 		if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
 		document.activeElement.blur();
@@ -413,9 +414,6 @@
 						/>
 						<strong>{$connectionAddress}</strong>
 					</div>
-					<!-- {#if $currentConnectionStatus.address}
-						({$currentConnectionStatus.address})
-					{/if} -->
 				</span>
 				<span class="minilabel"
 					>tap to {$currentConnectionStatus.status === ConnectionStatusEnum.CONNECTED

@@ -73,11 +73,13 @@ export class BaseConnection {
 	 */
 	_fireChannel(channel, active, name, color) {}
 
+	/** @returns {import('./types').BaseConnectionConfig} */
 	static getCompleteConfig() {
 		return {
 			// placeholder values for anything handled in this file across connection types
 			resendNum: 0,
 			autoReconnect: false,
+			liveMetersEnabled: false,
 		};
 	}
 

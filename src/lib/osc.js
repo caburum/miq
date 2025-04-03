@@ -3,10 +3,9 @@ import { get, writable } from "svelte/store";
 import { makeToast, oscConfig, currentConnectionStatus, ConnectionStatusEnum } from "./stores";
 import { BaseConnection } from "./baseConnection";
 
-export const channelMeters = writable([]);
-
 export class OSCConnection extends BaseConnection {
 	static name = "x32-proxy";
+
 	client;
 	liveRequestInterval;
 
@@ -51,7 +50,11 @@ export class OSCConnection extends BaseConnection {
 				console.log(meters[0]);
 			} else if (message.address === "/meters/1") {
 				let meters = new Float32Array(message.args[0].buffer.slice(24));
-				channelMeters.set(meters.slice(0, 32));
+				let levels = meters.slice(0, 32);
+				for (let i = 0; i < levels.length; i++) {
+					levels[i] = Math.pow(levels[i], 0.5);
+				}
+				channelMeters.set(levels);
 			}
 		});
 
@@ -97,11 +100,11 @@ export class OSCConnection extends BaseConnection {
 	static getCompleteConfig() {
 		const config = get(oscConfig);
 		return {
+			...BaseConnection.getCompleteConfig(),
 			...config,
 			host: config.host || "localhost",
 			port: config.port || 8080,
 			secure: config.secure ?? false,
-			autoReconnect: config.autoReconnect ?? false,
 		};
 	}
 
