@@ -169,9 +169,9 @@ export class M7CLConnection extends BaseConnection {
 			0x21, // remote level meter
 			0x00, // category
 			this.config.liveMeterPoint, // metering point
-			0x97, // start channel (all channel)
+			0x00, // start channel
 			0x00, // count H
-			0x00, // count L
+			56, // count L
 			0xf7,
 		]);
 	}
