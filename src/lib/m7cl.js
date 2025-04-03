@@ -115,12 +115,12 @@ export class M7CLConnection extends BaseConnection {
 				// data MSB
 				0xb0,
 				0x06,
-				0x00,
+				active ? 127 : 0,
 
 				// data LSB (ON)
 				0xb0,
 				0x26,
-				active ? 0x01 : 0x00,
+				active ? 127 : 0,
 			]);
 	}
 
