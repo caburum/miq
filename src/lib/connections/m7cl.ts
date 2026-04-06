@@ -105,7 +105,7 @@ export class M7CLConnection extends BaseConnection {
 		}
 
 		if (active !== null && this.output) {
-			this.output.send([
+			this.midiQueue.push(
 				// NRPN LSB (lower 7 bits)
 				0xb0,
 				0x62,
@@ -124,8 +124,8 @@ export class M7CLConnection extends BaseConnection {
 				// data LSB (ON)
 				0xb0,
 				0x26,
-				active ? 127 : 0,
-			]);
+				active ? 127 : 0
+			);
 
 			let nameBytes = name
 				.replace(/[^\x20-\x7e]/g, " ")
@@ -134,7 +134,7 @@ export class M7CLConnection extends BaseConnection {
 				.split("")
 				.map((c) => c.charCodeAt(0));
 
-			this.output.send([
+			this.midiQueue.push(
 				0xf0, // system exclusive
 				0x43, // manufacturer id
 				0x10, // paramater change, midi channel 0
@@ -177,8 +177,8 @@ export class M7CLConnection extends BaseConnection {
 				((nameBytes[6] & 0x3f) << 1) | (nameBytes[7] >> 7),
 				nameBytes[7] & 0x7f,
 
-				0xf7,
-			]);
+				0xf7
+			);
 		}
 	}
 
@@ -214,8 +214,9 @@ export class M7CLConnection extends BaseConnection {
 	}
 
 	protected _flush(): void {
-		console.log(`sending ${this.midiQueue.length} messages`);
-		this.output?.send(this.midiQueue);
+		if (!this.output || this.midiQueue.length === 0) return;
+		console.log(`sending ${this.midiQueue.length} MIDI bytes`);
+		this.output.send(this.midiQueue);
 		this.midiQueue.length = 0; // purge queue
 	}
 

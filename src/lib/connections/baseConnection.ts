@@ -11,6 +11,7 @@ import type { BaseColor, BaseConnectionConfig, Scene } from "../types";
 export abstract class BaseConnection {
 	static name: string;
 	static fullName: string;
+	private lastFiredDcas: Scene["dcas"] | undefined;
 
 	constructor() {
 		// reset status but keep reconnecting indicator if set
@@ -61,16 +62,20 @@ export abstract class BaseConnection {
 						);
 
 						if (scene.dcas && scene.dcas.size > 0) {
-							for (const [dca, dcaChannels] of scene.dcas) {
-								// even if channel is not in dca, we must make sure the dca is clear
-								// todo: only fire CHANGED dcas, not all
-								this._fireDCA(channelNum, dca, dcaChannels.has(channelNum));
-							}
+							if (scene.dcas !== this.lastFiredDcas) {
+								for (const [dca, dcaChannels] of scene.dcas) {
+									// even if channel is not in dca, we must make sure the dca is clear
+									// todo: only fire CHANGED dcas, not all
+									this._fireDCA(channelNum, dca, dcaChannels.has(channelNum));
+								}
+							} else console.log("DCAs not refiring, same as last scene");
 						}
 					}
 				});
 				this._flush();
 			}
+
+			this.lastFiredDcas = scene.dcas;
 
 			if (overrideToast) makeToast("overrides active", overrideToast, "info");
 		}

@@ -38,6 +38,13 @@ export function regenerateScenes(selectedConfig: Config) {
 		function generateDCAChange(col: number) {
 			let map: Map<number, Set<number>> = new Map();
 
+			// previously used DCAs should be cleared
+			if (lastDcaAssignments) {
+				for (const dca of lastDcaAssignments.keys()) {
+					map.set(dca, new Set());
+				}
+			}
+
 			for (let j = config.micsStartRow; j < table.length; j++) {
 				const micNum = Array.from(actorMicPairs.entries()).find(([_channel, { row }]) => row === j)?.[0];
 				if (!isMic(micNum)) {
