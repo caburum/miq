@@ -21,7 +21,7 @@ export function regenerateScenes(selectedConfig: Config) {
 		let table = selectedConfig.table;
 		let newScenes: Scene[] = [];
 		let actorMicPairs = new Map<number, { row: number; actor: string }>();
-		let lastDcaAssignments: Scene["dcas"] = undefined; // same map object may be shared across scenes
+		let lastDcaAssignments: Scene["dcas"] = undefined; // same map object may be shared across scenes, only replaced when modified
 
 		function generateActorMicPairs(col: number) {
 			for (let j = config.micsStartRow; j < table.length; j++) {
@@ -36,30 +36,32 @@ export function regenerateScenes(selectedConfig: Config) {
 		}
 
 		function generateDCAChange(col: number) {
-			let map: Map<number, Set<number>> = new Map();
+			let map: Scene["dcas"] = new Map();
 
 			// previously used DCAs should be cleared
 			if (lastDcaAssignments) {
 				for (const dca of lastDcaAssignments.keys()) {
-					map.set(dca, new Set());
+					map.set(dca, { name: "", mics: new Set() });
 				}
 			}
 
 			for (let j = config.micsStartRow; j < table.length; j++) {
 				const micNum = Array.from(actorMicPairs.entries()).find(([_channel, { row }]) => row === j)?.[0];
-				if (!isMic(micNum)) {
-					console.error(j, micNum);
-					continue;
-				}
+				if (!isMic(micNum)) continue;
 
 				const dcasOfChannel = table[j][col]
 					.split(",")
-					.map((dca) => parseInt(dca))
-					.filter(Number);
+					.map((row) => {
+						const match = /^(\d+)(?:\s+(.+))?$/.exec(row.trim());
+						if (match) return [Number.parseInt(match[1]), match[2] || ""] as const;
+					})
+					.filter((row): row is [number, string] => row !== undefined && !isNaN(row[0]));
 
-				for (const dca of dcasOfChannel) {
-					if (!map.has(dca)) map.set(dca, new Set());
-					map.get(dca)?.add(micNum);
+				for (const [dca, name] of dcasOfChannel) {
+					if (!map.has(dca)) map.set(dca, { name: "", mics: new Set() });
+					const dcaEntry = map.get(dca);
+					dcaEntry?.mics.add(micNum);
+					if (name && dcaEntry) dcaEntry.name = name;
 				}
 			}
 

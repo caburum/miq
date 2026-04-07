@@ -70,10 +70,21 @@
 	</div>
 	<div style="overflow: auto; position: relative;">
 		<div class="notes">
-			<h3 style="margin-block: 0.2em;">Notes</h3>
+			<h3>Notes</h3>
 			<p style="overflow: auto; white-space: pre-line;">
 				{scene?.notes || ""}
 			</p>
+			{#if scene?.dcas}
+				{@const dcas = [...scene?.dcas].filter(([_, { mics }]) => mics.size).sort(([a], [b]) => a - b)}
+				{#if dcas.length}
+					<h3>DCAs</h3>
+					<ul>
+						{#each dcas as [dca, { name }]}
+							<li>{dca}: {name}</li>
+						{/each}
+					</ul>
+				{/if}
+			{/if}
 		</div>
 	</div>
 </div>
@@ -193,6 +204,14 @@
 		min-width: 0;
 		// max-height: 100%;
 		// white-space: pre-line;
+
+		h3 {
+			margin-block: 0.2em;
+		}
+		ul {
+			list-style: none;
+			padding: 0;
+		}
 	}
 	.liveBadge {
 		background: var(--red);

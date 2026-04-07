@@ -93,6 +93,16 @@ export class M7CLConnection extends BaseConnection {
 		return device;
 	}
 
+	/** sanitize & map string to byte array */
+	private stringToBytes(string: string) {
+		return string
+			.replace(/[^\x20-\x7e]/g, " ")
+			.substring(0, 8)
+			.padEnd(8, " ")
+			.split("")
+			.map((c) => c.charCodeAt(0));
+	}
+
 	override _fireChannel(channel: number, active: boolean | null, name: string, color: BaseColor): void {
 		// https://jp.yamaha.com/files/download/other_assets/7/323187/m7clv3_en_om_i0.pdf p274,282
 		// M7CL has 48 mono input channels and 8 channels of stereo inputs
@@ -127,12 +137,7 @@ export class M7CLConnection extends BaseConnection {
 				active ? 127 : 0
 			);
 
-			let nameBytes = name
-				.replace(/[^\x20-\x7e]/g, " ")
-				.substring(0, 8)
-				.padEnd(8, " ")
-				.split("")
-				.map((c) => c.charCodeAt(0));
+			let nameBytes = this.stringToBytes(name);
 
 			this.midiQueue.push(
 				0xf0, // system exclusive
@@ -189,6 +194,9 @@ export class M7CLConnection extends BaseConnection {
 	protected _fireDCA(channel: number, dca: number, include: boolean): void {
 		if (!this.output) return;
 
+		dca -= 1;
+		if (dca < 0 || dca > 7) return;
+
 		this.midiQueue.push(
 			0xf0, // system exclusive
 			0x43, // manufacturer id
@@ -199,7 +207,7 @@ export class M7CLConnection extends BaseConnection {
 			0x00, // kInputDCA
 			0x3f, // kInputDCA
 			0x00, // kDCAAssign
-			dca - 1, // kDCAAssign
+			dca, // kDCAAssign
 			0x00, // CH TABLE #01
 			channel, // CH TABLE #01
 
@@ -208,6 +216,61 @@ export class M7CLConnection extends BaseConnection {
 			0x00,
 			0x00,
 			include ? 0x01 : 0x00,
+
+			0xf7
+		);
+	}
+
+	protected _nameDCA(dca: number, name: string): void {
+		if (!this.output) return;
+
+		dca -= 1;
+		if (dca < 0 || dca > 7) return;
+
+		let nameBytes = this.stringToBytes(name);
+
+		this.midiQueue.push(
+			0xf0, // system exclusive
+			0x43, // manufacturer id
+			0x10, // paramater change, midi channel 0
+			0x3e, // digital mixer
+			0x11, // M7CL
+			0x01, // data category
+			0x00, // kDCAName
+			0x79, // kDCAName
+			0x00, // kNameShort1
+			0x00, // kNameShort1
+			0x00, // CH TABLE #07
+			dca, // CH TABLE #07
+
+			// pack 8-bit ascii into 7-bit midi bytes
+			nameBytes[0] >> 4,
+			((nameBytes[0] & 0x0f) << 3) | (nameBytes[1] >> 5),
+			((nameBytes[1] & 0x1f) << 2) | (nameBytes[2] >> 6),
+			((nameBytes[2] & 0x3f) << 1) | (nameBytes[3] >> 7),
+			nameBytes[3] & 0x7f,
+
+			0xf7,
+
+			0xf0, // system exclusive
+			0x43, // manufacturer id
+			0x10, // paramater change, midi channel 0
+			0x3e, // digital mixer
+			0x11, // M7CL
+			0x01, // data category
+			0x00, // kDCAName
+			0x79, // kDCAName
+			0x00, // kNameShort2
+			0x01, // kNameShort2
+			0x00, // CH TABLE #07
+			dca, // CH TABLE #07
+
+			// pack 8-bit ascii into 7-bit midi bytes
+			nameBytes[4] >> 4,
+			((nameBytes[4] & 0x0f) << 3) | (nameBytes[5] >> 5),
+			((nameBytes[5] & 0x1f) << 2) | (nameBytes[6] >> 6),
+			((nameBytes[6] & 0x3f) << 1) | (nameBytes[7] >> 7),
+			nameBytes[7] & 0x7f,
 
 			0xf7
 		);

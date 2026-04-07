@@ -32,6 +32,7 @@ export abstract class BaseConnection {
 			let overrideToast = "";
 
 			for (let sends = 0; sends < sendNum; sends++) {
+				let sentDCANames = false;
 				scene.mics.forEach((mic, channelNum) => {
 					if (mic) {
 						if (channelNum < 1) {
@@ -63,12 +64,16 @@ export abstract class BaseConnection {
 
 						if (scene.dcas && scene.dcas.size > 0) {
 							if (scene.dcas !== this.lastFiredDcas) {
-								for (const [dca, dcaChannels] of scene.dcas) {
+								for (const [dca, { mics, name }] of scene.dcas) {
 									// even if channel is not in dca, we must make sure the dca is clear
 									// todo: only fire CHANGED dcas, not all
-									this._fireDCA(channelNum, dca, dcaChannels.has(channelNum));
+									this._fireDCA(channelNum, dca, mics.has(channelNum));
+
+									// only send DCA names on first iteration
+									if (!sentDCANames) this._nameDCA(dca, name);
 								}
 							} else console.log("DCAs not refiring, same as last scene");
+							sentDCANames = true;
 						}
 					}
 				});
@@ -95,7 +100,11 @@ export abstract class BaseConnection {
 	}
 
 	protected _fireDCA(channel: number, dca: number, include: boolean): void {
-		console.warn("DCAs not implemented");
+		console.warn("assigning DCAs not implemented");
+	}
+
+	protected _nameDCA(dca: number, name: string): void {
+		console.warn("naming DCAs not implemented");
 	}
 
 	/** for connections that pool data, ensures any queued data is sent */

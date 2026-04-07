@@ -42,7 +42,7 @@ export interface Scene {
 	name: string;
 	notes: string;
 	mics: Map<number, MicState>;
-	dcas?: Readonly<Map<number, Set<number>>>; // dca to its channels
+	readonly dcas?: Map<number, { name: string; mics: Set<number> }>;
 }
 
 export interface Toast {
