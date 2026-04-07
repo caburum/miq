@@ -237,7 +237,7 @@ export class M7CLConnection extends BaseConnection {
 			0x11, // M7CL
 			0x01, // data category
 			0x00, // kDCAName
-			0x79, // kDCAName
+			0x7b, // kDCAName
 			0x00, // kNameShort1
 			0x00, // kNameShort1
 			0x00, // CH TABLE #07
@@ -259,7 +259,7 @@ export class M7CLConnection extends BaseConnection {
 			0x11, // M7CL
 			0x01, // data category
 			0x00, // kDCAName
-			0x79, // kDCAName
+			0x7b, // kDCAName
 			0x00, // kNameShort2
 			0x01, // kNameShort2
 			0x00, // CH TABLE #07
