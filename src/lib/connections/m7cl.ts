@@ -196,6 +196,8 @@ export class M7CLConnection extends BaseConnection {
 
 		dca -= 1;
 		if (dca < 0 || dca > 7) return;
+		channel -= 1;
+		if (channel < 0 || channel > 55) return;
 
 		this.midiQueue.push(
 			0xf0, // system exclusive
