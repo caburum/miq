@@ -37,5 +37,6 @@ export function getCurrentScene() {
 }
 
 export function getTrackedMics() {
+	// todo: store in metadata when loading all scenes?
 	return Array.from(get(scenes)?.[0]?.mics?.keys() || []);
 }

@@ -5,6 +5,7 @@
 	import Page from "./Page.svelte";
 
 	import "boxicons";
+	import { makeToast } from "../lib/stores";
 
 	type Edit = Partial<Config & { id: number }>;
 
@@ -32,23 +33,23 @@
 
 	let exportedLink = $derived.by(() => {
 		if (editing) {
-			// export config as link with base64 encoded json containing google sheet Id
+			// export config as link with base64 encoded json
 			try {
 				let config = $storedConfigs.find((item) => item.id === editing?.id);
-				const sheetId = config?.sheetId;
-				if (!sheetId) return "";
 
-				let newConfig = { ...(config as Partial<DbConfig>), sheetId };
+				let newConfig = { ...(config as Partial<DbConfig>) };
 
 				delete newConfig.id;
 				delete newConfig.table;
 				delete newConfig.lastFetched;
 
+				delete newConfig.fileHandle;
+
 				const link = new URL(window.location.href);
 				link.searchParams.set("config", btoa(JSON.stringify(newConfig)));
 				return link.href;
 			} catch (error) {
-				console.error(error);
+				console.error("error generating link", error);
 			}
 		}
 		return "";
@@ -133,8 +134,42 @@
 						>
 					</p>
 					<p>
-						Google Sheets ID: <input type="text" placeholder="44 characters" bind:value={editing.sheetId} />
+						Source: <select bind:value={editing.source}>
+							<option value="google-sheets">Google Sheets</option>
+							<option value="file">Local File</option>
+						</select>
 					</p>
+					{#if editing.source == "file"}
+						<p>
+							<button
+								onclick={async (e) => {
+									try {
+										// todo: add support for other browsers
+										const [fileHandle] = await (window as any).showOpenFilePicker({
+											multiple: false,
+											types: [
+												{
+													description: "CSV Files",
+													accept: { "text/csv": [".csv"] },
+												},
+											],
+										});
+
+										if (fileHandle.kind !== "file") return;
+										editing!.fileHandle = fileHandle;
+										// file read through update mechanism
+									} catch (e) {
+										makeToast("Failed to access filesystem", "Check browser support", "error");
+									}
+								}}>Select File</button
+							>
+							{#if editing.fileHandle}{editing.fileHandle?.name}{/if}
+						</p>
+					{:else}
+						<p>
+							Google Sheets ID: <input type="text" placeholder="44 characters" bind:value={editing.sheetId} />
+						</p>
+					{/if}
 					<p>
 						Last fetched: {editing.lastFetched || "Never"}
 						<button

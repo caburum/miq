@@ -27,7 +27,10 @@ export interface Config {
 	actorNamesCol: number;
 	scenesStartCol: number;
 
+	source: "google-sheets" | "file";
 	sheetId?: string;
+	fileHandle?: FileSystemFileHandle;
+
 	table?: Table;
 	lastFetched?: Date;
 }
@@ -95,6 +98,15 @@ db.version(2)
 				makeToast("Database error", e, "error");
 			});
 	});
+db.version(3).upgrade((tx) => {
+	return tx
+		.table("configs")
+		.toCollection()
+		.modify((config) => {
+			// new required field
+			config.source = "google-sheets";
+		});
+});
 
 function dexieStore<T>(querier: () => T | Promise<T>, initialValue: T): Readable<T> {
 	const dexieObservable = Dexie.liveQuery(querier);
@@ -120,9 +132,9 @@ export const configs = derived([storedConfigs, externalConfigs], ([$storedConfig
 	),
 ]);
 
-async function parseSheet(sheetId: string): Promise<Table> {
+async function _parseSheet(source: string | File, options: object): Promise<Table> {
 	return new Promise<Table>((resolve, reject) => {
-		Papa.parse<string[]>(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`, {
+		Papa.parse<string[]>(source, {
 			download: true,
 			header: false,
 			complete: function (results) {
@@ -138,6 +150,10 @@ async function parseSheet(sheetId: string): Promise<Table> {
 		});
 	});
 }
+
+const parseSheetFromUrl = (sheetId: string) =>
+	_parseSheet(`https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`, { download: true });
+const parseSheetFromFile = (file: File) => _parseSheet(file, { download: false });
 
 export async function loadExternalConfig(
 	id: string,
@@ -161,7 +177,7 @@ export async function loadExternalConfig(
 		id: id,
 	};
 	if (!newConfig.table) {
-		const table = await parseSheet(newConfig.sheetId!);
+		const table = await parseSheetFromUrl(newConfig.sheetId!);
 		newConfig.table = table;
 	}
 	externalConfigs.update((configs) => {
@@ -177,10 +193,28 @@ export async function updateSheet<T extends DbConfig | ExternalConfig>(id: T["id
 
 	let editing = isExternal ? get(externalConfigs)[id] : await db.configs.get(id);
 
-	if (!editing?.sheetId) throw makeToast("No sheetId configured", "", "error");
+	let record = { ...editing, lastFetched: new Date() } as T;
 
-	const table = await parseSheet(editing.sheetId);
-	let record = { ...editing, table, lastFetched: new Date() } as T;
+	if (editing?.source === "file") {
+		const fileHandle = editing.fileHandle;
+		if (!fileHandle) throw makeToast("No file selected", "", "error");
+		// browser should be supported if we have a handle
+
+		const options = { mode: "read" };
+		if ((await (fileHandle as any).queryPermission?.(options)) !== "granted") {
+			if ((await (fileHandle as any).requestPermission?.(options)) !== "granted") {
+				throw makeToast("File permission not granted", String(editing.fileHandle?.name), "error");
+			}
+		}
+
+		const file = await editing.fileHandle?.getFile();
+		if (!file) throw makeToast("Failed accessing file", String(editing.fileHandle?.name), "error");
+
+		record.table = await parseSheetFromFile(file);
+	} else if (editing?.source === "google-sheets") {
+		if (!editing?.sheetId) throw makeToast("No sheetId configured", "", "error");
+		record.table = await parseSheetFromUrl(editing.sheetId);
+	}
 
 	isExternal
 		? externalConfigs.update((configs) => {
