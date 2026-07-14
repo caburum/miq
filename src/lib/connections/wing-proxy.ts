@@ -2,7 +2,7 @@ import OSC from "osc-js";
 import { get } from "svelte/store";
 import { getTrackedMics } from "../configState.svelte";
 import { ConnectionStatusEnum, currentConnectionStatus, makeToast, wingConfig } from "../stores";
-import type { BaseColor } from "../types";
+import type { BaseColor, Scene } from "../types";
 import { BaseConnection } from "./baseConnection";
 
 // https://wing-docs.com/article/osc
@@ -85,16 +85,34 @@ export class WingConnection extends BaseConnection {
 		// }
 	}
 
+	_sanitizeString = (str: string, maxLen: number) =>
+		str.replaceAll("'", "\\'").replaceAll("\\", "/").substring(0, maxLen);
+
 	override _fireChannel(channel: number, active: boolean | null, name: string, color: BaseColor): void {
-		let cmnd =
-			`name='${name.replaceAll("'", "\\'").replaceAll("\\", "/").substring(0, 16)}'` +
-			`,col=${WingConnection.colors[color]}`;
+		let cmnd = `name='${this._sanitizeString(name, 16)}'` + `,col=${WingConnection.colors[color]}`;
 		if (active !== null) cmnd += `,mute=${active ? 0 : 1}`;
 
 		const message = new OSC.Message(`/ch/${channel}`, cmnd);
+		// console.log("Sending message:", message);
+
+		this.client.send(message);
+	}
+
+	override _fireDCAs(channel: number, dcas: NonNullable<Scene["dcas"]>) {
+		console.log(dcas);
+
+		const tags = Array.from(dcas.entries())
+			.filter(([_, { mics }]) => mics.has(channel))
+			.map(([dcaNum]) => `#D${dcaNum}`);
+
+		const message = new OSC.Message(`/ch/${channel}/tags`, tags.join(","));
 		console.log("Sending message:", message);
 
 		this.client.send(message);
+	}
+
+	override _nameDCA(dca: number, name: string): void {
+		this.client.send(new OSC.Message(`/dca/${dca}/name`, this._sanitizeString(name, 8)));
 	}
 
 	message: {

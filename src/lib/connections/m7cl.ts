@@ -1,6 +1,6 @@
 import { get } from "svelte/store";
 import { channelMeters, ConnectionStatusEnum, currentConnectionStatus, m7clConfig, makeToast } from "../stores";
-import type { BaseColor, M7CLConfig } from "../types";
+import type { BaseColor, M7CLConfig, Scene } from "../types";
 import { BaseConnection } from "./baseConnection";
 
 export class M7CLConnection extends BaseConnection {
@@ -191,7 +191,15 @@ export class M7CLConnection extends BaseConnection {
 	// todo: auto flush when full?
 	private midiQueue: number[] = [];
 
-	protected _fireDCA(channel: number, dca: number, include: boolean): void {
+	override _fireDCAs(channel: number, dcas: NonNullable<Scene["dcas"]>) {
+		for (const [dca, { mics, name }] of dcas) {
+			// even if channel is not in dca, we must make sure the dca is clear
+			// todo: only fire CHANGED dcas, not all
+			this._fireDCA(channel, dca, mics.has(channel));
+		}
+	}
+
+	_fireDCA(channel: number, dca: number, include: boolean): void {
 		if (!this.output) return;
 
 		dca -= 1;
@@ -223,7 +231,7 @@ export class M7CLConnection extends BaseConnection {
 		);
 	}
 
-	protected _nameDCA(dca: number, name: string): void {
+	override _nameDCA(dca: number, name: string): void {
 		if (!this.output) return;
 
 		dca -= 1;
@@ -278,7 +286,7 @@ export class M7CLConnection extends BaseConnection {
 		);
 	}
 
-	protected _flush(): void {
+	override _flush(): void {
 		if (!this.output || this.midiQueue.length === 0) return;
 		console.log(`sending ${this.midiQueue.length} MIDI bytes`);
 		this.output.send(this.midiQueue);

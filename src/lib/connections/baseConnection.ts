@@ -64,16 +64,15 @@ export abstract class BaseConnection {
 
 						if (scene.dcas && scene.dcas.size > 0) {
 							if (scene.dcas !== this.lastFiredDcas) {
-								for (const [dca, { mics, name }] of scene.dcas) {
-									// even if channel is not in dca, we must make sure the dca is clear
-									// todo: only fire CHANGED dcas, not all
-									this._fireDCA(channelNum, dca, mics.has(channelNum));
-
-									// only send DCA names on first iteration
-									if (!sentDCANames) this._nameDCA(dca, name);
-								}
+								this._fireDCAs(channelNum, scene.dcas);
 							} else console.log("DCAs not refiring, same as last scene");
-							sentDCANames = true;
+
+							if (!sentDCANames) {
+								for (const [dca, { mics, name }] of scene.dcas) {
+									this._nameDCA(dca, name);
+								}
+								sentDCANames = true;
+							}
 						}
 					}
 				});
@@ -99,12 +98,12 @@ export abstract class BaseConnection {
 		console.warn("BaseConnection._fireChannel not implemented, please override in subclass");
 	}
 
-	protected _fireDCA(channel: number, dca: number, include: boolean): void {
-		console.warn("assigning DCAs not implemented");
-	}
-
 	protected _nameDCA(dca: number, name: string): void {
 		console.warn("naming DCAs not implemented");
+	}
+
+	protected _fireDCAs(channel: number, dcas: NonNullable<Scene["dcas"]>): void {
+		console.warn("firing DCAs not implemented");
 	}
 
 	/** for connections that pool data, ensures any queued data is sent */
