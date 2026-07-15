@@ -86,7 +86,7 @@ export class WingConnection extends BaseConnection {
 	}
 
 	_sanitizeString = (str: string, maxLen: number) =>
-		str.replaceAll("'", "\\'").replaceAll("\\", "/").substring(0, maxLen);
+		str.replaceAll("\\", "/").replaceAll("'", "\\'").substring(0, maxLen);
 
 	override _fireChannel(channel: number, active: boolean | null, name: string, color: BaseColor): void {
 		let cmnd = `name='${this._sanitizeString(name, 16)}'` + `,col=${WingConnection.colors[color]}`;
@@ -99,14 +99,11 @@ export class WingConnection extends BaseConnection {
 	}
 
 	override _fireDCAs(channel: number, dcas: NonNullable<Scene["dcas"]>) {
-		console.log(dcas);
-
 		const tags = Array.from(dcas.entries())
 			.filter(([_, { mics }]) => mics.has(channel))
 			.map(([dcaNum]) => `#D${dcaNum}`);
 
 		const message = new OSC.Message(`/ch/${channel}/tags`, tags.join(","));
-		console.log("Sending message:", message);
 
 		this.client.send(message);
 	}
