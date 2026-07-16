@@ -154,6 +154,8 @@
 		document?.body?.classList?.toggle("miniMode", miniMode);
 	});
 
+	let windowUnfocused = $state(false);
+
 	// fixme: currently broken, should be rewritten as $state
 	let channelOverrideDialogChannel = $state<number | null>(null);
 	const populateChannelOverride = (number: number | null | undefined) => {
@@ -248,7 +250,18 @@
 	onkeyup={(e) => {
 		if (e.key === " ") debouncingFire = false;
 	}}
-	onblur={() => (debouncingFire = false)}
+	onblur={() => {
+		debouncingFire = false;
+		windowUnfocused = true;
+	}}
+	onfocus={() => (windowUnfocused = false)}
+	onbeforeunload={(e) => {
+		// warn when leaving while running a board
+		if ($currentConnectionStatus.status === ConnectionStatusEnum.CONNECTED) {
+			e.preventDefault();
+			return (e.returnValue = "");
+		}
+	}}
 />
 
 <main class:showingPage={$showingPage} inert={!!$showingPage} class:hideButtons={rxActive && $mqttConfig.rx_preview}>
@@ -256,7 +269,8 @@
 		<!-- svelte-ignore a11y_no_noninteractive_element_to_interactive_role -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<h1
-			style="font-weight: 100; color: var(--text-dimmed);"
+			style="font-weight: 100;"
+			style:color={windowUnfocused ? "var(--red)" : "var(--text-dimmed)"}
 			onclick={() => {
 				if (confirm("Refresh? (connections could be lost)")) {
 					location.reload();
@@ -265,6 +279,7 @@
 			role="button"
 		>
 			miq
+			{windowUnfocused ? " - no focus" : ""}
 		</h1>
 		<div class="horiz" style="height: 100%; padding-block: 4px;">
 			<button
